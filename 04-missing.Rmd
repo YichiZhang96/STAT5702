@@ -1,0 +1,84 @@
+# Missing values
+
+```{r setup, include=FALSE}
+# install packages if needed
+# install.packages("visdat")
+# install.packages("mi")
+# install.packages("naniar")
+# devtools::install_github("cran/extracat")
+library(visdat)
+library(mi)
+library(extracat)
+library(tidyverse)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+```
+
+We randomly sample 1000 data to analyze the missing value patterns of the dataset after cleaning the data. We also change the "UNKNOWN" entry to NA for convenience.
+
+```{r echo=FALSE}
+df_cols <- colnames(df_select)
+df <- df_select %>%
+  mutate(CMPLNT_FR_DT=as.Date(CMPLNT_FR_DT, "%m/%d/%Y")) %>%
+  filter(CMPLNT_FR_DT >= as.Date("01/01/2018", "%m/%d/%Y")) %>% 
+  sample_n(1000)
+#df <- df %>% select(-timerange, -color, -crimecolor)
+df <- df %>% mutate(SUSP_AGE_GROUP = ifelse(SUSP_AGE_GROUP == "UNKNOWN", NA, SUSP_AGE_GROUP))
+df <- df %>% mutate(SUSP_RACE = ifelse(SUSP_RACE == "UNKNOWN", NA, SUSP_RACE))
+df <- df %>% mutate(VIC_AGE_GROUP = ifelse(VIC_AGE_GROUP == "UNKNOWN", NA, VIC_AGE_GROUP))
+df <- df %>% mutate(VIC_RACE = ifelse(VIC_RACE == "UNKNOWN", NA, VIC_RACE))
+vis_miss(df)
+```
+
+From the plot above, we see that majority of missing data is from the columns: "SUSP_AGE_GEOUP", "SUSP_SEX", "SUSP_RACE", "VIC_AGE_GROUP", "VIC_RACE", "Latitude" and "Longitude". We also see that "Latitude" and "Longitude" are always missing together. 
+
+We can further investigate the missing row patterns by missing_data.frame function.
+
+```{r include=FALSE}
+df$CMPLNT_FR_DT <- as.character(df$CMPLNT_FR_DT)
+df$CMPLNT_FR_TM <- as.character(df$CMPLNT_FR_TM)
+names(df) <- df_cols
+x <- missing_data.frame(df)
+summary(x@patterns) 
+```
+
+We find out that there are 30 different row missing patterns. Some of the patterns only have one or two occurrences and 20 of them have 10 occurrences or below.
+
+We can check how many times each of the row missing pattern appears in the data set by the following visualization.
+
+```{r fig.height = 9, echo=FALSE, warning=FALSE}
+visna(df, sort='r')
+```
+
+(Note that in the above plot, the columns represent the seven variables and the rows the missing patterns. The cells for the variables with missing values in the pattern are drawn in blue.)
+
+Therefore we observe the following missing row patterns:
+
+1. The pattern that occurs the most frequently is missing both Latitude and Longitude, which is about 92% of the data.
+2. The information on the suspect is missing such as age, sex, and race tends to be missing along with some other variables.
+
+Since the objective of our project is to analyze the safety issue, when doing the interactive part of the project, we will need to use the location information. So we have to drop all the data with Longitude and Latitude missing. This might affect the distribution of the crime, so we plot the following diagram to compare the distribution of crime types before and after the missing location data is removed.
+
+```{r fig.height = 8, fig.width = 10, echo=FALSE}
+p1 <- ggplot(df_select, aes(x=OFNS_DESC, y=..count..)) +
+  geom_bar(fill="lightblue") + 
+  xlab("Crime Type") +
+  ylab("Number of Crimes") +
+  labs(title="Count by Crime Type") + 
+  theme_grey(16)+
+  theme(axis.text.x=element_text(size=9))
+
+df_locationNA_dropped <- df_select %>% drop_na(Latitude)
+p2 <- ggplot(df_locationNA_dropped, aes(x=OFNS_DESC, y=..count..)) +
+  geom_bar(fill="lightblue") +
+  xlab("Crime Type") +
+  ylab("Number of Crimes") +
+  labs(title="Count by Crime Type with Location NA Dropped") + 
+  theme_grey(16)+
+  theme(axis.text.x=element_text(size=9))
+
+grid.arrange(p1, p2, ncol = 1)
+```
+
+Base on the above two plots, we see that after the data with missing location is removed, the distribution of crime types is unchanged. So, the missing location is somewhat random and we are safe to remove it when doing the interactive part. However, before the interactive part, we will keep the records without longitude and latitude in order to preserve more information of our dataset.

@@ -1,0 +1,13 @@
+--- 
+title: Recommended Boroughs and Places for Full-Time Student to Live in
+   <br/><font size="5" color = "grey"> Examination of Selected Crime Rate in New York City </font>
+author: "Yichi Zhang, Zelin Li, Huayun Xu, Mingfang Chang"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+---
+
+# Introduction
+
+![](https://twt-thumbs.washtimes.com/media/image/2018/01/01/1_1_2018_b1-davi-newyork-cri8201_c0-144-875-654_s885x516.jpg?8db5faa7ac6a541080b0e25ae358890a2cd5b947)
+
+Many full-time students at Columbia, including us, are living off-campus currently and may need to find new housing in the next semester or the next year. Among all the considerations while searching available apartments, Most students care most about the safety of areas surrounding the apartment. However, when googling the crime rate analysis, we find that they are not very instructive, as there are many crime types included that irrelevant to us. Hence the objective of our final project is that based on the crime types we care about, the time periods we go outside, and victim age group of crimes in each borough, finding the relatively safe areas by researching the crime rate of five boroughs, Manhattan, Bronx, Brooklyn, Queens, and Staten Island, in New York City. If possible, we would like to find the specific addresses in the selected borough which can be regarded as a reference of safety for all students who are finding housing.

@@ -1,0 +1,311 @@
+# Results
+```{r include=FALSE}
+library(dplyr)
+library(choroplethrMaps)
+library(choroplethr)
+library(ggplot2)
+library(viridis)
+library(chron)
+library(tidyverse)
+```
+
+In section 3, we have dropped some trivial crime types like "CRIMINAL MISCHIEF", and now we only pay attention to the common crime types of events happening in NYC. There are 11 crime types in total, and we can see the frequency rank of them in the following graph.
+
+```{r echo=FALSE}
+df1 <- data.frame(df_select[,4])
+df1['count'] <- 1
+df1<- df1 %>%
+  group_by(df_select...4.) %>%
+  summarize(Freq = sum(count))
+
+ggplot(df1, aes(reorder(df_select...4.,df1$Freq), y = df1$Freq)) +
+  geom_bar(position = "dodge",stat = "identity",fill="lightblue") +
+  coord_flip() +
+  labs(x = "Crime Types", y = "Total amount", title = "Major Crimes in NYC")
+
+```
+
+As we can see, THIEF is the most common crime in NYC, then we deduce that this phenomenon may result from the low cost of theft. Offense also appears very common, because there are many different types of crime that could be classified as OFFENCE. ARSON, MURDER, and KIDNAPPING are the least common crime types in the dataset.
+
+For the convenience of the later researches, we drop 5 types of crime from our dataset: ARSON, MURDER, KIDNAPPING, DRUG, and FRAUD. 
+
+MURDER related data has a great amount of missing data for latitude and longitude, also ARSON, MURDER, and KIDNAPPING contain very few useful pieces of data, which is difficult to conduct instructive analysis. We drop FRAUD because this could be avoided effectively. For DRUG, although it is very common, it is the indirect reason for other crimes like offense or murder, the crime DRUG itself usually doesn't cause great harm to society explicitly.
+
+## Whcih Crime Types Are More Common in Each Borough?
+
+```{r echo=FALSE}
+dangerous <-c('BURGLARY','OFFENSE','RAPE','ROBBERY','THEFT','WEAPON')
+df_select <- df_select %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% dangerous, OFNS_DESC, NA)) %>% drop_na(OFNS_DESC)
+df_select <- drop_na(df_select, BORO_NM)
+```
+
+```{r echo=FALSE}
+
+DATA2 <- read.csv("QuickFacts.csv")
+
+DATA2 <-DATA2[, colSums(is.na(DATA2)) != nrow(DATA2)]
+DATA2 <-DATA2[,-c(2,8)]
+DATA2 <-as.data.frame(t(DATA2))
+names(DATA2) <- as.character(unlist(DATA2[1,]))
+DATA2 <- DATA2[-1,]
+
+DATA2 <-as.data.frame(DATA2[,1])
+
+names(DATA2)<-'Population'
+
+row.names(DATA2) <-c('MANHATTAN','BRONX','QUEENS','BROOKLYN','STATEN ISLAND')
+
+
+ChorDF <-df_select%>%
+  group_by(df_select$BORO_NM) %>%
+  summarise(count=n())%>%
+  ungroup()
+
+ChorDF <- data.frame(ChorDF[,-1], row.names = unlist(ChorDF[,1]))
+
+ChorDF <- merge(ChorDF,DATA2,by = 0)
+
+
+ChorDF$count <-as.numeric(ChorDF$count)
+
+ChorDF$Population <-as.numeric((gsub("\\,", "", ChorDF$Population)))
+
+ChorDF <-ChorDF %>%
+  mutate(rate = as.double(count/Population)*100000)
+
+ChorDF[,'region'] <- NA
+
+for(i in 1:nrow(ChorDF)){
+  if(ChorDF[i,1] == 'BRONX'){ChorDF[i,'region'] <-36005}
+  if(ChorDF[i,1] == 'BROOKLYN'){ChorDF[i,'region'] <-36047}
+  if(ChorDF[i,1] == 'MANHATTAN'){ChorDF[i,'region'] <-36061}
+  if(ChorDF[i,1] == 'QUEENS'){ChorDF[i,'region'] <-	36081}
+  if(ChorDF[i,1] == 'STATEN ISLAND'){ChorDF[i,'region'] <-36085}
+}
+
+colnames(ChorDF)[4] <-'value'
+
+
+data(county.regions)
+nyc_county_names = c("kings", "bronx", "new york", "queens", "richmond")
+nyc_county_fips = county.regions %>%
+  filter(state.name == "new york" & county.name %in% nyc_county_names) %>%
+  select(region)
+county_choropleth(ChorDF,
+                  title = paste("Number of Selected Crime per 100000 Population for","Five Boroughof NYC", sep="\n"),
+                  legend = "Crime Rate",
+                  num_colors = 1,
+                  county_zoom = nyc_county_fips$region)
+``` 
+
+After selecting the six crime types that most related to us, we take the population of each borough into account and calculate the crime rate of selected crimes in five boroughs. The Boroughs with the top three highest crime rates are Manhattan, Bronx, and Brooklyn, whereas Queens and Staten Island have lower crime rates, and this forms a spatial pattern in the graph. We are surprised about the finding because it breaks our "stereotype" that Brooklyn is the most dangerous borough in New York City. 
+
+However, we cannot judge which borough is more dangerous for us and which borough is safer from this graph. Since a different person may have different ranks for the dangerousness of these crime types. 
+
+```{r echo=FALSE}
+#Cleveland dot plot
+library(tidyverse)
+cleveland <-df_select[,c('BORO_NM','OFNS_DESC')]
+
+cleveland['Freq'] = 1
+
+cleveland <- cleveland %>%
+  group_by(BORO_NM,OFNS_DESC) %>%
+  summarize(Freq = log(sum(Freq),2)) %>%
+  ungroup()
+
+
+theme_dotplot <- theme_bw(16) +
+    theme(axis.text.y = element_text(size = rel(1)),
+          axis.text.x = element_text(size = rel(1)),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(size = rel(.70)),
+        axis.title.y = element_text(size = rel(.70)),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(size = 0.5),
+        panel.grid.minor.x = element_blank())
+
+
+ggplot(cleveland,aes(Freq,fct_reorder2(BORO_NM,
+   OFNS_DESC == 'THIEF',Freq, .desc = FALSE),color = OFNS_DESC))+
+  geom_point()+
+  ylab('Boroughs')+
+  xlab('Crime Rate')+
+  labs(title = 'Crime rate for each type by Boroughs ',color = "Crime Type")+
+  theme_dotplot
+```
+
+The above graph shows the exact crime rate for each type in five boroughs. The most frequent crime types are OFFENSE and THEFT for all boroughs. As we discussed above, the cost of theft is the lowest and the definition of the offense is broadly defined, which could be the reason for the high frequency of these two crime types. 
+
+Therefore, we focus on the other four crime types. Interestingly, Brooklyn has the highest crime rate for all four severe crime types(rape, robbery, weapon, burglary), but the total crime rate of Brooklyn is actually lower than that of Manhattan. It seems that the crimes happened in Brooklyn are more likely to be severe crimes.
+
+Bronx has the second highest total crime rate and also the second highest rate for all severe crime types. Therefore neither Bronx nor Brooklyn is a good choice for a student like us to live concerning safety. 
+
+For Staten Island, the frequency of all crime types is significantly lower than those of the other four boroughs. From the safety concern, Staten Island may be a good choice for moving to. However, the commute time should also be taken into account for final decision making.
+
+## Which Borough is Safer Based on Crime Time?
+
+We want to figure out if there is a special time in 2019 that more crimes happened. So we build the following graph for recognizing time series patterns.
+
+```{r echo=FALSE}
+df2 <- data.frame(df_select[,1:2])
+df2['count'] <- 1
+df2<- df2 %>%
+  group_by(CMPLNT_FR_DT) %>%
+  summarize(Freq = sum(count))
+
+df2 <- df2 %>%
+  filter(CMPLNT_FR_DT >=as.Date('2019-01-01') & CMPLNT_FR_DT <=as.Date('2019-9-25'))
+
+ggplot(df2, aes(as.Date(CMPLNT_FR_DT), y = Freq)) +
+  geom_line(color="orange")+ 
+  ylim(0, 900) +
+  labs(x = "Time", y = "Total amount", title = "Time series pattern in 2019")+
+  theme_grey(16)
+```
+
+As shown in the graph, more crimes happened in early January and summer in 2019. Early January, especially during the new year celebration time, since more people went out for celebrations, the raise in crime amount is reasonable. Besides, summer time is another period for more crimes. It is may because of the relation between weather and people's moods.
+
+Since this research is aimed to find a suitable and safe region for university students to live, we want to see the time series pattern in each borough.
+
+```{r fig.height = 8, fig.width = 10, echo=FALSE}
+
+df2 <- data.frame(df_select[,1:2])
+df2['count'] <- 1
+
+df2 <-df2[!is.na(df2$BORO_NM), ]
+df2<- df2 %>%
+  group_by(BORO_NM,CMPLNT_FR_DT) %>%
+  summarize(Freq = sum(count))
+
+
+df2 <- df2 %>%
+  filter(CMPLNT_FR_DT >=as.Date('2019-01-01') & CMPLNT_FR_DT <=as.Date('2019-9-25'))
+
+df2["adjusted"] <- 0
+df3 <- data.frame(df2)
+DA <- data.frame(DATA2)
+DA$Population <-as.numeric((gsub("\\,", "", DA$Population)))
+
+for(i in 1:1340){
+  states <- df3[i,1]
+  df3[i,'adjusted']<-100000*df3[i,3]/DA[states,"Population"]
+}
+
+ggplot(df3, aes(as.Date(CMPLNT_FR_DT), y = Freq)) +
+  geom_line(color="orange") + 
+  facet_wrap(~BORO_NM, scales="free",ncol = 2)+
+  labs(x = "Time", y = "Crime Rate", title = "Time series pattern in 2019 in different boroughs")+
+  theme_grey(16)
+
+
+```
+
+Among 5 boroughs, There are small decline trends after August in all Boroughs except Manhattan, which means the crime rate for all Boroughs except Manhattan probabably will continue to decline after September. Since many lease periods begin around September, Queens may be a better choice to living than Manhattan from the plots above.
+
+```{r echo=FALSE}
+picked_time <- c("7am - 11am", "11am - 3pm", "3pm - 7pm","7pm - 11pm")
+crime_color <- c("#7851a9", "#800020", "#ef5927", "#0079c1", "#dac751", "#133a30")
+
+df_select <- df_select %>% drop_na(BORO_NM)
+df_select <- df_select %>% mutate(timerange = CMPLNT_FR_TM)
+df_select <- df_select %>% mutate(timerange = ifelse(CMPLNT_FR_TM >= chron(times="07:00:00") 
+                                                & CMPLNT_FR_TM <= chron(times="10:59:59"),
+                                                "7am - 11am", timerange) )
+df_select <- df_select %>% mutate(timerange = ifelse(CMPLNT_FR_TM >= chron(times="11:00:00") 
+                                                & CMPLNT_FR_TM <= chron(times="14:59:59"),
+                                                "11am - 3pm", timerange) )
+
+df_select <- df_select %>% mutate(timerange = ifelse(CMPLNT_FR_TM >= chron(times="15:00:00") 
+                                                & CMPLNT_FR_TM <= chron(times="18:59:59"),
+                                                "3pm - 7pm", timerange) )
+df_select <- df_select %>% mutate(timerange = ifelse(CMPLNT_FR_TM >= chron(times="19:00:00") 
+                                                & CMPLNT_FR_TM <= chron(times="23:00:00"),
+                                                "7pm - 11pm", timerange) )
+
+#df_select <- df_select %>% mutate(color = timerange)
+#df_select <- df_select %>% mutate( color = ifelse(timerange == picked_time[1], "red", color) )
+#df_select <- df_select %>% mutate( color = ifelse(timerange == picked_time[2], "green", color) )
+#df_select <- df_select %>% mutate( color = ifelse(timerange == picked_time[3], "blue", color) )
+
+#df_select <- df_select %>% mutate(crimecolor = OFNS_DESC)
+#for(i in 1:length(dangerous)){
+  #df_select <- df_select %>% mutate( crimecolor = ifelse(OFNS_DESC == dangerous[i], crime_color[i], crimecolor) )   
+#}
+
+df_select <- df_select %>% mutate(timerange = ifelse(timerange %in% picked_time, timerange, NA)) %>% drop_na(timerange)
+
+df_select$timerange <- factor(df_select$timerange, levels = c("7am - 11am","11am - 3pm","3pm - 7pm","7pm - 11pm"))
+```
+
+As a student, we rent an apartment because we need to go to school or work. So it is very important to avoid the places that have a higher chance of crime when we are walking to school, or coming back home. Therefore, we have broken down the time periods that the crime happened into four ranges:
+
+1. 7 am - 11 am 
+2. 11 am - 3 pm
+3. 3 pm - 7 pm 
+4. 7 pm - 11 pm
+
+The period we care most about is the following:
+
+1. 7 am - 11 am (the time going to school or work)
+2. 3 pm - 7 pm (the time going back home )
+3. 7 pm - 11 pm (the time going back home when we have night class)
+
+```{r fig.height = 7, fig.width = 10,echo=FALSE}
+
+ggplot(df_select, aes(x=BORO_NM, ..count.., fill=timerange) )+ 
+  geom_bar(position="dodge")+
+  xlab("Boroughs")+
+  ylab("Number of Crimes")+
+  ggtitle(paste("The Distribution of Crime Events", "in Each Time Periods by Boroughs", sep="\n"))+
+  theme(legend.title = element_blank())+
+  theme_grey(16)+
+  theme(legend.title = element_blank())+
+  theme(axis.text.x=element_text(size=10))
+  
+
+```
+
+From the graph above, there is the same pattern for every borough. The descending order of number of crimes is 3pm -7pm, 11am - 3pm, 7pm - 11pm, and 7am - 11am. Separating the time period doesn't help us figure out which borough has an apparent advantage to live. However, we can adjust our schedule base on the graph above. For example, if you live in Manhattan, going out before 11 am and back home after 7 pm can help you avoid more crimes.   
+
+
+As full-time students, the frequency we go outside depends on days: we go out more frequently from Monday to Friday rather than weekends. Therefore we want to find a borough with a lower frequency of crime events in weekdays, and the plot is as follow: 
+
+```{r fig.height = 8, fig.width = 10,echo=FALSE}
+library(chron)
+library(ggplot2)
+ggplot(df_select, aes(factor(weekdays(CMPLNT_FR_DT,abbreviate =TRUE), levels=c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))))+
+  geom_bar(fill="lightblue")+
+  xlab("Weekdays and Weekends")+
+  ggtitle(paste("The Number of Crime Events in Weekdays", "by Boroughs in New York City", sep="\n"))+
+  facet_wrap("BORO_NM",scale="free")+
+  theme(axis.text.x=element_text(size=6))+
+  theme_grey(16)+
+  ylab("Number of Crimes")
+```
+
+Based on the above plot, the weekdays' pattern is similar for each borough, whereas for weekends the occurrence of crime events is relatively infrequent compared to weekdays. Since we will go outside more during weekdays, the graph above doesn't help us find out the most suitable borough. However, the graph remind us that we should try to choose safer periods to go outside on Friday. 
+
+## Which Borough is Safer for Student Age Groups?
+
+Since most of the full-time students are in the age group 18-24, and we want to find how these students including us are related to the victims of crime events, we extract the data of victims in 18-24 age group for each borough and draw the following barplot:
+
+```{r echo=FALSE}
+df_age <- subset(df_select, as.character(VIC_AGE_GROUP) %in% c("<18", "18-24", "25-44", "45-64","65+") )
+df_age2<-subset(df_age, as.character(VIC_AGE_GROUP)=="18-24")
+#df_age2 <- df_age2$VIC_AGE_GROUP
+df_age2 <-df_age2%>%
+  group_by(df_age2$BORO_NM) %>%
+  summarise(count=n())%>%
+  ungroup()
+names(df_age2)[1] <- "Borough"
+df_age2$count <- df_age2$count/ChorDF$Population*100000
+names(df_age2)[2] <- "Rate"
+ggplot(df_age2, aes(x=reorder(Borough, -Rate), y=Rate))+
+  geom_bar(stat = "identity",fill="lightblue")+
+  xlab("Boroughs")+
+  ggtitle(paste("The Number of Victims per 100000 People", "in 18-24 Age Group by Boroughs in New York City", sep="\n"))+
+  theme_grey(16)
+```
+
+For the plot above, we convert the count of crime events to crime rate per 100000 people, and we can see clearly that Manhattan has the largest crime rate for the age group 18-24, while Staten Island and Queens have the smallest crime rate. Combining with the result from crime types part(Manhattan and Queens are two best choices), Queens should be a better choice for full-time student than Manhattan.

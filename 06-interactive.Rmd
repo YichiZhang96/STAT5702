@@ -1,0 +1,188 @@
+# Interactive component
+
+```{r eval=TRUE, message=FALSE, include=FALSE}
+library(tidyverse)
+library(leaflet)
+library(htmltools)
+library(leaflet.extras)
+library(viridis)
+```
+
+
+As we discussed in the previous chapters, Queens and Manhattan should be the best two boroughs for us. However, the best choice is based on our criteria, and we don't compare the crime rates of the specific places inside each borough. The following two interactive graphs provide customization of both the time periods and crime types for people with different preferences and help people identify the safe places in each borough.
+
+
+## Select Your Schedule
+
+Different people have different schedules; for instance, some students only have class in the afternoon, then the time period they go to school should be 11 am - 3 pm. On the top right corner, there are several checkboxes. The audience can choose some time periods based on their own schedules. And the crime distribution in New York City for the selected time period will appear on the map. The number in each circle shows the total number of crimes in the area surrounding the address. Clicking the circle shown on the graph can zoom into a smaller scope. Eventually, when the zoom becomes smaller enough, the circle will become pin push in the graph and if you click the pin push, it will show the exact crime time, victim age group, victim sex, and victim race. 
+
+```{r echo=FALSE}
+
+df <- df_select %>% drop_na(Latitude, Longitude)
+Y <- split(df, df$timerange)
+
+leaf <- leaflet() %>% addTiles()
+
+leaf <- leaf %>%
+      addMarkers(data=Y[[1]],
+                          lng=~Longitude, lat=~Latitude,
+                          popup=paste0(paste("Time: ",Y[[1]]$CMPLNT_FR_TM),"</strong><br />",paste("Type: ",Y[[1]]$OFNS_DESC),"</strong><br />",
+                                       paste("Victim Age: ",Y[[1]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",Y[[1]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",Y[[1]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "7am - 11am"
+                          )
+
+ leaf <- leaf %>%addMarkers(data=Y[[2]],
+                           lng=~Longitude, lat=~Latitude,
+                           popup=paste0(paste("Time: ",Y[[2]]$CMPLNT_FR_TM),"</strong><br />",paste("Type: ",Y[[2]]$OFNS_DESC),"</strong><br />",
+                                       paste("Victim Age: ",Y[[2]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",Y[[2]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",Y[[2]]$VIC_RACE)),
+                           clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                           labelOptions = labelOptions(direction = 'auto'),
+                           group = "11am - 3pm"
+ 
+                           )
+     
+leaf <- leaf %>%addMarkers(data=Y[[3]],
+                          lng=~Longitude, lat=~Latitude,
+                          popup=paste0(paste("Time: ",Y[[3]]$CMPLNT_FR_TM),"</strong><br />",paste("Type: ",Y[[3]]$OFNS_DESC),"</strong><br />",
+                                       paste("Victim Age: ",Y[[3]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",Y[[3]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",Y[[3]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "3pm - 7pm"
+
+                          )
+leaf <- leaf %>%
+     addMarkers(data=Y[[4]],
+                          lng=~Longitude, lat=~Latitude,
+                          popup=paste0(paste("Time: ",Y[[4]]$CMPLNT_FR_TM),"</strong><br />",paste("Type: ",Y[[4]]$OFNS_DESC),"</strong><br />",
+                                       paste("Victim Age: ",Y[[4]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",Y[[4]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",Y[[4]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "7pm - 11pm"
+                          )
+
+
+
+leaf %>%
+  addLayersControl(
+    overlayGroups = c("7am - 11am", "11am - 3pm","3pm - 7pm","7pm - 11pm"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+```
+
+
+
+
+## Select Crimes You Concern Most
+
+
+Different people may also have a different rank in the dangerousness of the crime types. For females, they may be more afraid of rape and prefer to choose address with extremely low rape rate. For Male, they may want to live in place with less burglary and robbery. In the interactive graph, there are several checkboxes on the top right corner, and users can choose from crime types to find the exact address in each borough based on their own crime rank. Same as the graph above, You can click the circle continuously to zoom into a smaller scope and click the pin push, it will show you the exact crime time, victim age group, victim sex, and victim race.  
+
+```{r echo=FALSE}
+TYPE <- split(df, df$OFNS_DESC)
+
+leaftype <- leaflet() %>% addTiles()
+
+
+leaftype <- leaftype %>%
+      addMarkers(data=TYPE[[1]],
+                          lng=~Longitude, lat=~Latitude,
+                          label =~OFNS_DESC , 
+                          popup=paste0(paste("Time: ",TYPE[[1]]$CMPLNT_FR_TM),"</strong><br />",
+                                       paste("Victim Age: ",TYPE[[1]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",TYPE[[1]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",TYPE[[1]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "BURGLARY"
+                          )
+     
+leaftype <- leaftype %>%addMarkers(data=TYPE[[2]],
+                          lng=~Longitude, lat=~Latitude,
+                          label =~OFNS_DESC , 
+                          popup=paste0(paste("Time: ",TYPE[[2]]$CMPLNT_FR_TM),"</strong><br />",
+                                       paste("Victim Age: ",TYPE[[2]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",TYPE[[2]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",TYPE[[2]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "OFFENSE"
+
+                          )
+leaftype <- leaftype %>%
+     addMarkers(data=TYPE[[3]],
+                          lng=~Longitude, lat=~Latitude,
+                          label =~OFNS_DESC , 
+                          popup=paste0(paste("Time: ",TYPE[[3]]$CMPLNT_FR_TM),"</strong><br />",
+                                       paste("Victim Age: ",TYPE[[3]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",TYPE[[3]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",TYPE[[3]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "RAPE"
+                          )
+
+
+leaftype <- leaftype %>%
+     addMarkers(data=TYPE[[4]],
+                          lng=~Longitude, lat=~Latitude,
+                          label =~OFNS_DESC , 
+                          popup=paste0(paste("Time: ",TYPE[[4]]$CMPLNT_FR_TM),"</strong><br />",
+                                       paste("Victim Age: ",TYPE[[4]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",TYPE[[4]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",TYPE[[4]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "ROBBERY"
+                          )
+leaftype <- leaftype %>%
+     addMarkers(data=TYPE[[5]],
+                          lng=~Longitude, lat=~Latitude,
+                          label =~OFNS_DESC , 
+                          popup=paste0(paste("Time: ",TYPE[[5]]$CMPLNT_FR_TM),"</strong><br />",
+                                       paste("Victim Age: ",TYPE[[5]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",TYPE[[5]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",TYPE[[5]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "THEFT"
+                          )
+leaftype <- leaftype %>%
+     addMarkers(data=TYPE[[6]],
+                          lng=~Longitude, lat=~Latitude,
+                          label =~OFNS_DESC , 
+                          popup=paste0(paste("Time: ",TYPE[[6]]$CMPLNT_FR_TM),"</strong><br />",
+                                       paste("Victim Age: ",TYPE[[6]]$VIC_AGE_GROUP),
+                                       "</strong><br />",paste("Victim Sex: ",TYPE[[6]]$VIC_SEX),
+                                       "</strong><br />",
+                                       paste("Victim Race: ",TYPE[[6]]$VIC_RACE)),
+                          clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = T),
+                          labelOptions = labelOptions(direction = 'auto'),
+                          group = "WEAPON"
+                          )
+
+leaftype %>%
+  addLayersControl(
+    overlayGroups = c("BURGLARY","OFFENSE","RAPE","ROBBERY","THEFT","WEAPON"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```

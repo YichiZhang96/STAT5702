@@ -1,0 +1,43 @@
+# Data sources
+
+## NYPD Complaint Data
+
+We obtain the data of crime events to be researched from NYC Open Data, and here is the [link](https://data.cityofnewyork.us/Public-Safety/NYPD-Complaint-Data-Current-Year-To-Date-/5uac-w243/data).
+
+This dataset includes all valid felony, misdemeanor, and violation crimes reported to the New York City Police Department (NYPD) for all complete quarters so far this year (2019). Because we find the data at the end of October, the data is up to September 2019. Then we have download the dataset as a CSV file, and we also have download the explanation of each column name as a pdf file found from "About" on the right side of the website.
+
+There are 347074 observations with 35 variables in this dataset. These variables include information about the victim, suspect, location, date of crime, type of crime, description of crime and more. All crimes are divided into 62 different types. The problem is that this dataset is quite sparse, and some spatial and suspect information is missing. There is also some wrong information, for example, some crimes are reported in the year of 1018.
+
+We are interested in some of the variables and will pick them out in the cleaning section:
+
+**BORO_NM**: The name of the borough in which the incident occurred
+
+**CMPLNT_FR_DT**: Exact date of occurrence for the reported event (or starting date of occurrence, if CMPLNT_TO_DT exists)
+
+**CMPLNT_FR_TM**: Exact time of occurrence for the reported event (or starting time of occurrence, if CMPLNT_TO_TM exists)
+
+**OFNS_DESC**: Description of offense corresponding with key code
+
+**PREM_TYP_DESC**: Specific description of premises; grocery store, residence, street, etc.
+
+**SUSP_AGE_GROUP**: Suspect’s Age Group
+
+**SUSP_SEX**: Suspect’s Sex Description
+
+**SUSP_RACE**: Suspect’s Race Description
+
+**VIC_AGE_GROUP**: Victim’s Age Group
+
+**VIC_RACE**: Victim’s Race Description
+
+**VIC_SEX**: Victim’s Sex Description (D=Business/Organization, E=PSNY/People of the State of New York, F=Female, M=Male)
+
+**Latitude**: Midblock Latitude coordinate for Global Coordinate System, WGS 1984, decimal degrees (EPSG 4326)
+
+**Longitude**: Midblock Longitude coordinate for Global Coordinate System, WGS 1984, decimal degrees (EPSG 4326)
+
+## United States Census Bureau Quick Facts
+
+Another dataset we will use is the report of the population in each of 5 boroughs in New York City at the end of 2018 from the U.S. Census, which is downloaded from this [link](https://www.census.gov/quickfacts/fact/table/newyorkcountymanhattanboroughnewyork,bronxcountybronxboroughnewyork,queenscountyqueensboroughnewyork,kingscountybrooklynboroughnewyork,richmondcountystatenislandboroughnewyork,newyorkcitynewyork/HSG010218).
+
+Because currently we are in 2019 and there is no data of the population at the end of 2019, we will use this dataset to calculate the crime rate for each borough in the later research.

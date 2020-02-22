@@ -1,0 +1,70 @@
+# Data transformation
+
+## Convert Type and Fix Error in Data
+
+First of all, since we would like to analyze the occurrence time and date of each crime record, we change the types of corresponding columns to date and time. However, some crime records happen a long year ago(like the 1950s) but complete recently are included in the dataset. In order to keep our data up to date, we drop all records that happen before 2018-01-01. For error data such as record happened in 1018 or 1019, we fix it by inferring from other information in this record.
+
+```{r include=FALSE}
+
+library(tidyr)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(chron)
+```
+
+```{r echo=FALSE}
+DATA <- read.csv("NYPD_Complaint_Data_Current__Year_To_Date_.csv",na.strings = "")
+
+DATA <-DATA[!is.na(DATA$CMPLNT_FR_DT), ]
+DATA$CMPLNT_FR_DT <-as.Date(DATA$CMPLNT_FR_DT,format = "%m/%d/%Y")
+
+for(i in 1:nrow(DATA)){
+  if(year(DATA[i,4]) =='1018'){year(DATA[i,4]) <-2018}
+  if(year(DATA[i,4]) =='1019'){year(DATA[i,4]) <-2019}
+  if(year(DATA[i,4]) =='1029'){year(DATA[i,4]) <-2019}
+}
+
+DATA$CMPLNT_FR_TM <-as.character(DATA$CMPLNT_FR_TM)
+DATA$CMPLNT_FR_TM <-chron(times=DATA$CMPLNT_FR_TM)
+
+df <- DATA %>%
+  filter(CMPLNT_FR_DT >=as.Date('2018-01-01'))
+```
+
+## Pick Out Relevant Crimes
+
+Another goal of our exploration is to analyze the types of crime in each borough. However, some crime descriptions are too detailed. So we classify all of them into 11 types based on broader definitions of each type(like all offenses with different targets are classified as an offense). And all other types with low frequency and completely irrelevant to us such as gambling is dropped.
+
+```{r echo=FALSE}
+offense <- c('ANTICIPATORY OFFENSES', "OFF. AGNST PUB ORD SENSBLTY &", "OFFENSES AGAINST MARRIAGE UNCL", "OFFENSES AGAINST PUBLIC ADMINI", "OFFENSES AGAINST PUBLIC SAFETY", "OFFENSES AGAINST THE PERSON", "OFFENSES INVOLVING FRAUD", "OFFENSES RELATED TO CHILDREN", "OTHER OFFENSES RELATED TO THEF","HARASSMENT 2")
+assault <- c('ASSAULT 3 & RELATED OFFENSES', 'FELONY ASSAULT')
+burglary <- c('BURGLARY', "BURGLAR'S TOOLS", "CRIMINAL TRESPASS")
+drug <- c("DANGEROUS DRUGS")
+weapon <- c("DANGEROUS WEAPONS", "UNLAWFUL POSS. WEAP. ON SCHOOL" )
+rape <- c("FELONY SEX CRIMES", "RAPE", "SEX CRIMES")
+fraud <- c("FRAUDS", "FORGERY", "FRAUDULENT ACCOSTING", "THEFT-FRAUD")
+theft <- c("GRAND LARCENY", "GRAND LARCENY OF MOTOR VEHICLE", "OTHER OFFENSES RELATED TO THEF", "PETIT LARCENY", "PETIT LARCENY OF MOTOR VEHICLE", "POSSESSION OF STOLEN PROPERTY", "THEFT OF SERVICES")
+murder <- c("MURDER & NON-NEGL. MANSLAUGHTER")
+kidnapping <- c("KIDNAPPING", "KIDNAPPING & RELATED OFFENSES", "KIDNAPPING AND RELATED OFFENSES")
+
+picked <- c('ROBBERY', "OFFENSE", "ARSON", "BURGLARY", "DRUG", "WEAPON", "RAPE", "FRAUD", "THEFT", "MURDER", "KIDNAPPING")
+df$OFNS_DESC <- as.character(df$OFNS_DESC)
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% offense, "OFFENSE", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% assault, "ASSAULT", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% drug, "DRUG", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% weapon, "WEAPON", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% rape, "RAPE", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% fraud, "FRAUD", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% theft, "THEFT", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% murder, "MURDER", OFNS_DESC))
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% kidnapping, "KIDNAPPING", OFNS_DESC))
+
+df <- df %>% mutate(OFNS_DESC = ifelse(OFNS_DESC %in% picked, OFNS_DESC, NA)) %>% drop_na(OFNS_DESC)
+```
+
+Since not all columns in the original dataset are useful for our analysis, we select 13 columns that may be used for the following research, including location, time, suspect information, victim information, and the crime information.
+```{r echo=FALSE}
+cols <- c('BORO_NM', 'CMPLNT_FR_DT','CMPLNT_FR_TM','OFNS_DESC', 'SUSP_AGE_GROUP', 'PREM_TYP_DESC', 'SUSP_SEX', 'SUSP_RACE', 'VIC_AGE_GROUP', 'VIC_RACE', 'VIC_SEX', 'Latitude', 'Longitude')
+df_select <- df[, cols]
+```

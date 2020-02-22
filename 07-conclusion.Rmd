@@ -1,0 +1,13 @@
+# Conclusion
+
+## Boroughs We Recommend
+
+Based on concerns about crime type, crime time, and victim age group, the three safer boroughs are Manhattan, Queens, Staten Island. Although Manhattan has a higher total crime rate than Brooklyn and Bronx, the major crime types in Manhattan actually are offense and theft, which do not directly endanger our lives. For Brooklyn and Bronx, these two boroughs have top two highest crime rates in the most severe crime types(rape, robbery, weapon, burglary). For Staten Island, if commute time is considered, it may not a good choice for students who attend university in Manhattan. Therefore, we recommend full-time students to live in Manhattan and Queens.
+
+## Specific Places for Selected Borough
+
+For more detailed address, we find out two specific places from our interactive graph based on our schedule and rank. The first place we recommend is Long Island City in Queens. In the interactive graph, there are only 4 crimes(three theft and one offense) happened in here and even no recorded crime at 7 am - 11 am. These four crimes are not considered severe crimes in our criteria. The second place is Roosevelt Island, which has only two recorded thefts and has no recorded crime at 7 pm - 11 pm. It should be a good choice for students with more courses in the afternoon and evening. For students who would like to live in Manhattan, Manhattan downtown has lower crime at 7 am - 11 am and 7 pm - 11 pm, and both midtown and downtown have less severe crimes than uptown.
+
+## Limitation
+
+However, safety is not the only criteria for choosing a place to live in. There are some other factors, such as commute time and price, should also be taken into account. In our research, we only use selected crime rates to select the best place for students. Luckily, the commute time from two addresses we selected to Manhattan is in an acceptable range in our knowledge. Another limitation is that, as we know, a lot of students in Manhattan also consider New Jersey as a good place to live in because of its acceptable commute time and lower price, while the crime record of the place near New York City has not included into our dataset. For future research, we may include the crime record of the area close to NYC in New Jersy and make analysis about the rent price, commute time and other factors. We believe that if we do further research,  more suitable places for full-time student to live in can be found.
